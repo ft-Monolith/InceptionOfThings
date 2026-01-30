@@ -1,0 +1,14 @@
+# Vagrant
+.vagrant/
+*.log
+
+# Token files
+token
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

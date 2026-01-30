@@ -1,0 +1,40 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  # Use latest stable Debian
+  config.vm.box = "debian/bookworm64"
+  
+  # Disable automatic box update checking
+  config.vm.box_check_update = false
+
+  # Server node (controller mode)
+  config.vm.define "qordouxS" do |server|
+    server.vm.hostname = "qordouxS"
+    server.vm.network "private_network", ip: "192.168.56.110"
+    server.vm.synced_folder "./confs", "/vagrant"
+    
+    server.vm.provider "virtualbox" do |vb|
+      vb.name = "qordouxS"
+      vb.memory = "1024"
+      vb.cpus = 1
+    end
+    
+    server.vm.provision "shell", path: "scripts/setup.sh", args: "server"
+  end
+
+  # Server Worker node (agent mode)
+  config.vm.define "qordouxSW" do |worker|
+    worker.vm.hostname = "qordouxSW"
+    worker.vm.network "private_network", ip: "192.168.56.111"
+    worker.vm.synced_folder "./confs", "/vagrant"
+    
+    worker.vm.provider "virtualbox" do |vb|
+      vb.name = "qordouxSW"
+      vb.memory = "1024"
+      vb.cpus = 1
+    end
+    
+    worker.vm.provision "shell", path: "scripts/setup.sh", args: "worker"
+  end
+end
