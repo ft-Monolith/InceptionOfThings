@@ -1,90 +1,123 @@
----
-# === APP 1 ===
+# Deployments
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: app-one
+    name: app1
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: app-one
-  template:
-    metadata:
-      labels:
-        app: app-one
-    spec:
-      containers:
-      - name: app-one
-        image: traefik/whoami
+    selector:
+        matchLabels:
+            app: app1
+    template:
+        metadata:
+            labels:
+                app: app1
+        spec:
+            containers:
+                - name: app1
+                  image: nginx:alpine
+                  command: ['/bin/sh', '-c', "echo '<h1>app1</h1>' > /usr/share/nginx/html/index.html && nginx -g 'daemon off;'"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: app2
+spec:
+    replicas: 3
+    selector:
+        matchLabels:
+            app: app2
+    template:
+        metadata:
+            labels:
+                app: app2
+        spec:
+            containers:
+                - name: app2
+                  image: nginx:alpine
+                  command: ['/bin/sh', '-c', "echo '<h1>app2</h1>' > /usr/share/nginx/html/index.html && nginx -g 'daemon off;'"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: app3
+spec:
+    selector:
+        matchLabels:
+            app: app3
+    template:
+        metadata:
+            labels:
+                app: app3
+        spec:
+            containers:
+                - name: app3
+                  image: nginx:alpine
+                  command: ['/bin/sh', '-c', "echo '<h1>app3</h1>' > /usr/share/nginx/html/index.html && nginx -g 'daemon off;'"]
+---
+# Services
+apiVersion: v1
+kind: Service
+metadata:
+    name: app1-service
+spec:
+    selector:
+        app: app1
+    ports:
+        - port: 80
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: app-one
+    name: app2-service
 spec:
-  ports:
-  - port: 80
-    targetPort: 80
-  selector:
-    app: app-one
----
-# === APP 2 (3 Replicas demandés ) ===
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: app-two
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: app-two
-  template:
-    metadata:
-      labels:
-        app: app-two
-    spec:
-      containers:
-      - name: app-two
-        image: traefik/whoami
+    selector:
+        app: app2
+    ports:
+        - port: 80
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: app-two
+    name: app3-service
 spec:
-  ports:
-  - port: 80
-    targetPort: 80
-  selector:
-    app: app-two
+    selector:
+        app: app3
+    ports:
+        - port: 80
 ---
-# === APP 3 (Défaut) ===
-apiVersion: apps/v1
-kind: Deployment
+# Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: app-three
+    name: apps-ingress
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: app-three
-  template:
-    metadata:
-      labels:
-        app: app-three
-    spec:
-      containers:
-      - name: app-three
-        image: traefik/whoami
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: app-three
-spec:
-  ports:
-  - port: 80
-    targetPort: 80
-  selector:
-    app: app-three
+    rules:
+        - host: app1.com
+          http:
+              paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: app1-service
+                            port:
+                                number: 80
+        - host: app2.com
+          http:
+              paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: app2-service
+                            port:
+                                number: 80
+        - http:
+              paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: app3-service
+                            port:
+                                number: 80
