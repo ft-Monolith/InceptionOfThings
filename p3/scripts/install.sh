@@ -48,6 +48,11 @@ echo "ArgoCD password : ${ARGOCD_PWD}"
 
 sudo kubectl apply -f ../confs/application.yaml
 
+
+kubectl port-forward svc/argocd-server -n argocd 8080:443 > /dev/null 2>&1 &
+
+echo "ArgoCD UI is now available on https://localhost:8080"
+
 # utils
 # sudo kubectl get nodes
 # sudo kubectl get pods -n argocd
