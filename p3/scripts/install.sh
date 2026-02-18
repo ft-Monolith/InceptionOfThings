@@ -9,7 +9,7 @@ fi
 
 # Install kubectl ------------------------------------------------------------
 if command -v kubectl >/dev/null 2>&1; then
-    echo "kubectl already installed : $(kubectl version --client --short | head -n1)"
+    echo "kubectl already installed : $(kubectl version --client | head -n1)"
 else
 	curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 	sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
@@ -41,10 +41,17 @@ sudo kubectl create namespace dev
 # Install ArgoCD -----------------------------------------------------------------
 sudo kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
+sudo kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=300s
+
 ARGOCD_PWD=$(sudo kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
 echo "ArgoCD password : ${ARGOCD_PWD}"
 
 sudo kubectl apply -f ../confs/application.yaml
+
+
+kubectl port-forward svc/argocd-server -n argocd 8080:443 > /dev/null 2>&1 &
+
+echo "ArgoCD UI is now available on https://localhost:8080"
 
 # utils
 # sudo kubectl get nodes
