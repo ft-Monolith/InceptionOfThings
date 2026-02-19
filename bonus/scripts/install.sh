@@ -7,92 +7,75 @@ if [ "$EUID" -ne 0 ]; then
   exit
 fi
 
-# Install kubectl ------------------------------------------------------------
-if command -v kubectl >/dev/null 2>&1; then
-    echo "kubectl already installed : $(kubectl version --client | head -n1)"
-else
-	curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-	sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-fi
-# ------------------------------------------------------------------------------
+# 1. Nettoyage
+k3d cluster delete iot-cluster 2>/dev/null
 
-
-
-# Install K3D ------------------------------------------------------
-if command -v k3d >/dev/null 2>&1; then
-	echo "k3d already installed : $(k3d version | head -n1)"
-else
-curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=v5.6.0 bash
-fi
-# ------------------------------------------------------------------------------
-
-
-# Install Helm --------------------------------------------------------------------
-if command -v helm >/dev/null 2>&1; then
-    echo "helm already installed : $(helm version | head -n1)"
-else
-	curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-fi
-
-
-# Cluster creation -----------------------------------------------------------------
+# 2. Création du Cluster (On garde tes ports habituels)
 k3d cluster create iot-cluster \
     -p "8888:80@loadbalancer" \
-    -p "8081:8081@loadbalancer"
+    -p "8080:30080@loadbalancer"
 
-sudo mkdir -p /root/.kube
-sudo cp $HOME/.kube/config /root/.kube/config
+# Configuration Kubeconfig
+mkdir -p /root/.kube
+k3d kubeconfig get iot-cluster > /root/.kube/config
+USER_HOME=$(eval echo ~${SUDO_USER})
+mkdir -p "${USER_HOME}/.kube"
+k3d kubeconfig get iot-cluster > "${USER_HOME}/.kube/config"
+chown -R ${SUDO_USER}:${SUDO_USER} "${USER_HOME}/.kube"
 
-sudo kubectl create namespace argocd
-sudo kubectl create namespace dev
-sudo kubectl create namespace gitlab
+kubectl create namespace argocd
+kubectl create namespace gitlab
 
-
-# # Install ArgoCD -----------------------------------------------------------------
-sudo kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-
-sudo kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=300s
-
-ARGOCD_PWD=$(sudo kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
-
-# Install GitLab -----------------------------------------------------------------
-echo "Installing GitLab with Helm"
+# 3. Installation GitLab (LA CORRECTION EST ICI)
+echo "Installing GitLab avec la config 'Minikube'..."
 helm repo add gitlab https://charts.gitlab.io/
 helm repo update
-helm install gitlab gitlab/gitlab \
+
+helm upgrade --install gitlab gitlab/gitlab \
   --namespace gitlab \
+  --timeout 600s \
+  -f https://gitlab.com/gitlab-org/charts/gitlab/raw/master/examples/values-minikube-minimum.yaml \
   --set global.hosts.domain=localhost \
-  --set global.edition=ce \
-  --set global.ingress.configureCertmanager=false \
-  --set certmanager.enabled=false \
-  --set gitlab-runner.install=false \
-  --set prometheus.install=false \
+  --set global.hosts.externalURL=http://localhost:8181 \
+  --set global.hosts.https=false \
+  --set certmanager-issuer.enabled=false \
   --set gitlab.webservice.replicaCount=1 \
-  --set gitlab.sidekiq.replicaCount=1 \
-  --set postgresql.image.tag=16.4.0 \
-  --timeout 600s
+  --set postgresql.image.tag=16.4.0
 
-# -------------------------------------------------------------------------------
+# 4. Installation ArgoCD
+echo "Installing ArgoCD..."
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
-echo "Waiting for GitLab secret to be generated..."
-while ! kubectl get secret -n gitlab gitlab-gitlab-initial-root-password > /dev/null 2>&1; do
-  sleep 2
-done
+# 5. Attente des services
+echo "Attente de GitLab (cela peut prendre 5-8 min)..."
+kubectl rollout status deployment/gitlab-webservice-default -n gitlab --timeout=15m
 
+# 6. Automatisation des accès
+sudo fuser -k 8081/tcp 8080/tcp 2>/dev/null
+
+# On lance les tunnels en tâche de fond
+# NOTE: Le tunnel GitLab mappe le 8081 vers le 8181 interne (match avec externalURL)
+kubectl port-forward svc/gitlab-webservice-default -n gitlab 8081:8181 --address 0.0.0.0 > /dev/null 2>&1 &
+kubectl port-forward svc/argocd-server -n argocd 8080:443 --address 0.0.0.0 > /dev/null 2>&1 &
+
+# 7. Récupération des mots de passe
 GITLAB_PWD=$(kubectl get secret -n gitlab gitlab-gitlab-initial-root-password -o jsonpath="{.data.password}" | base64 -d)
-kubectl port-forward svc/argocd-server -n argocd 8080:443 > /dev/null 2>&1 &
+ARGOCD_PWD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
 
-echo "Installation complete!"
-echo "------------------------------------------------------"
-echo "ArgoCD password : ${ARGOCD_PWD}"
-echo "GitLab root password : ${GITLAB_PWD}"
-echo "------------------------------------------------------"
-echo "ArgoCD : https://localhost:8080"
+echo ""
+echo "-------------------------------------------------------"
+echo "GitLab Root Password : ${GITLAB_PWD}"
+echo "ArgoCD Admin Password : ${ARGOCD_PWD}"
+echo "-------------------------------------------------------"
 echo "GitLab : http://localhost:8081"
-echo "------------------------------------------------------"
-
+echo "ArgoCD : https://localhost:8080"
+echo "-------------------------------------------------------"
 # # utils
 # # sudo kubectl get nodes
 # # sudo kubectl get pods -n argocd
 # # sudo kubectl get pods -n dev
 # # sudo kubectl get ingress -n dev
+
+
+gitlab+deploy-token-1
+gldt-sudKEpEvgtR5z6BVnj8t
