@@ -23,8 +23,9 @@ mkdir -p "${USER_HOME}/.kube"
 k3d kubeconfig get iot-cluster > "${USER_HOME}/.kube/config"
 chown -R ${SUDO_USER}:${SUDO_USER} "${USER_HOME}/.kube"
 
-kubectl create namespace argocd
-kubectl create namespace gitlab
+kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
+kubectl create namespace gitlab --dry-run=client -o yaml | kubectl apply -f -
+kubectl create namespace dev --dry-run=client -o yaml | kubectl apply -f -
 
 # 3. Installation GitLab (LA CORRECTION EST ICI)
 echo "Installing GitLab avec la config 'Minikube'..."
@@ -62,7 +63,6 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443 --address 0.0.0.0 > /d
 GITLAB_PWD=$(kubectl get secret -n gitlab gitlab-gitlab-initial-root-password -o jsonpath="{.data.password}" | base64 -d)
 ARGOCD_PWD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
 
-echo ""
 echo "-------------------------------------------------------"
 echo "GitLab Root Password : ${GITLAB_PWD}"
 echo "ArgoCD Admin Password : ${ARGOCD_PWD}"

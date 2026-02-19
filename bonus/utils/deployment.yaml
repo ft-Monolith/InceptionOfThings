@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-iot
+  namespace: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: iot-web
+  template:
+    metadata:
+      labels:
+        app: iot-web
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "echo 'Coucou - Version 1' > /usr/share/nginx/html/index.html"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-service
+  namespace: dev
+spec:
+  selector:
+    app: iot-web
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
