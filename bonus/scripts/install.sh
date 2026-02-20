@@ -77,5 +77,5 @@ echo "-------------------------------------------------------"
 # # sudo kubectl get ingress -n dev
 
 
-gitlab+deploy-token-1
-gldt-sudKEpEvgtR5z6BVnj8t
+# gitlab+deploy-token-1
+# gldt-X7w_RHWcMJy-pgp669TC
