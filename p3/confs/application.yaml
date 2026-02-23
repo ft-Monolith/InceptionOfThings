@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/jgavairo/iot-gitops
+    repoURL: https://github.com/jgavairo/iot-jgavairo
     targetRevision: HEAD
     path: app
   destination:
