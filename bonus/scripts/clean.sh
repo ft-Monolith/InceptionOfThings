@@ -1,7 +1,11 @@
 #!/bin/bash
 
-echo "Cleaning GitLab namespace..."
-sudo kubectl delete namespace gitlab || true
-sudo fuser -k 8080/tcp 2>/dev/null || true
-echo "Done."
+if [ "$EUID" -ne 0 ]; then 
+  echo "Please run this script with sudo or as root."
+  exit
+fi
 
+echo "Cleaning up..."
+kubectl delete namespace gitlab || true
+pkill -f "port-forward" || true
+echo "Done."
