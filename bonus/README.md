@@ -35,7 +35,7 @@ sudo bash scripts/clean.sh
 cd /tmp
 git clone http://root:jgavairo42@localhost:8081/root/jgavairo-app.git
 cd jgavairo-app && mkdir app
-cp /home/iotbonus/Documents/iot/iot/bonus/utils/deployment.yaml app/
+cp /home/iotbonus/Documents/iot/iot/bonus/confs/deployment.yaml app/
 git config user.email "root@localhost" && git config user.name "root"
 git add . && git commit -m "v1" && git push
 ```
