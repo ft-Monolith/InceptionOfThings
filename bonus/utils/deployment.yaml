@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: wil-app
+  name: jgavairo-app
   namespace: dev
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: wil-app
+      app: jgavairo-app
   template:
     metadata:
       labels:
-        app: wil-app
+        app: jgavairo-app
     spec:
       containers:
-      - name: wil-container
+      - name: jgavairo-container
         image: wil42/playground:v1
         ports:
         - containerPort: 8888
@@ -22,11 +22,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: wil-app-service
+  name: jgavairo-app-service
   namespace: dev
 spec:
   selector:
-    app: wil-app
+    app: jgavairo-app
   ports:
   - protocol: TCP
     port: 80

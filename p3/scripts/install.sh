@@ -46,7 +46,7 @@ sudo kubectl wait --for=condition=available deployment/argocd-server -n argocd -
 ARGOCD_PWD=$(sudo kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
 echo "ArgoCD password : ${ARGOCD_PWD}"
 
-sudo kubectl apply -f ../confs/application.yaml
+sudo kubectl apply -f /home/iotbonus/Documents/iot/iot/p3/confs/application.yaml
 
 
 kubectl port-forward svc/argocd-server -n argocd 8080:443 > /dev/null 2>&1 &

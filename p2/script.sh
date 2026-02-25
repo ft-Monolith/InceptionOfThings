@@ -13,6 +13,12 @@ echo "=========================================="
 echo "[1/5] Mise à jour du système..."
 sudo apt update && sudo apt upgrade -y
 
+# Outils de base
+if ! command -v curl &> /dev/null; then
+    echo "  - Installation de curl..."
+    sudo apt install -y curl
+fi
+
 # Installation de VirtualBox
 echo "[2/5] Installation de VirtualBox..."
 if ! command -v VBoxManage &> /dev/null; then
