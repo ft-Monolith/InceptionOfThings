@@ -1,80 +1,71 @@
 # Bonus: GitLab + ArgoCD
 
-This bonus sets up a local GitLab instance with ArgoCD for GitOps-based deployments.
+Local GitLab instance connected to ArgoCD for GitOps-based deployments.
 
 ## Prerequisites
-
 - Docker installed
-- k3d cluster running (from p3)
-- kubectl configured
 
-## Installation
-
+## Install
 ```bash
+cd bonus/
 sudo bash scripts/install.sh
 ```
+Installs: kubectl, k3d, helm, GitLab, ArgoCD. Creates namespaces: `gitlab`, `argocd`, `dev`.
 
-This will:
-1. Install Helm
-2. Deploy GitLab in the `gitlab` namespace
-3. Deploy ArgoCD in the `argocd` namespace
-4. Create a `dev` namespace for applications
-5. Set up port-forwards for web access
-
-## Access
-
-After installation, you'll see credentials for:
-- **GitLab**: http://localhost:8081 (user: root)
-- **ArgoCD**: https://localhost:8080 (user: admin)
+Credentials at the end of the script:
+- **GitLab** : http://localhost:8081 — user: `root` / pass: `GITLAB_ROOT_PASSWORD` from `confs/config.env`
+- **ArgoCD** : https://localhost:8080 — user: `admin` / pass: displayed in terminal output
 
 ## Cleanup
-
 ```bash
 sudo bash scripts/clean.sh
 ```
 
-## Manual Steps (if needed)
+---
 
-### 1. Create a GitLab project
+## Demo (soutenance)
 
-- Go to http://localhost:8081 and login as root
-- Create a new project called `jgavairo-app`
-- In project Settings > Repository > Deploy tokens, create a read-only token for ArgoCD
+### 1. Create the GitLab project
+- Go to http://localhost:8081, login as `root` (pass: see `confs/config.env`)
+- `New project` → `Create blank project`
+- Name: `jgavairo-app`, Visibility: **Public**, uncheck "Initialize with README" → `Create project`
 
-### 2. Push deployment config to GitLab
-
+### 2. Push the deployment config
 ```bash
-git clone http://root@127.0.0.1:8081/root/jgavairo-app.git
-cd jgavairo-app
-mkdir app
-cp ../utils/deployment.yaml app/
-git add .
-git commit -m "initial deployment"
-git push
+cd /tmp
+git clone http://root:jgavairo42@localhost:8081/root/jgavairo-app.git
+cd jgavairo-app && mkdir app
+cp /home/iotbonus/Documents/iot/iot/bonus/utils/deployment.yaml app/
+git config user.email "root@localhost" && git config user.name "root"
+git add . && git commit -m "v1" && git push
 ```
 
-### 3. Configure ArgoCD
+### 3. Sync ArgoCD
+On https://localhost:8080 → click the app **jgavairo-app** → **Refresh** → **Sync**
 
-- Go to https://localhost:8080
-- Settings > Repositories > Connect Repo
-- URL: `http://gitlab-webservice-default.gitlab.svc.cluster.local:8181/root/jgavairo-app.git`
-- Click "Connect"
-
-### 4. Create the ArgoCD application
+Or wait ~3 min for automatic sync.
 
 ```bash
-kubectl apply -f confs/argocd/app.yaml
+sudo kubectl get applications -n argocd   # → Synced / Healthy
+sudo kubectl get pods -n dev              # → jgavairo-app Running
 ```
 
-## Test GitOps
-
-Update the app version in GitLab and watch ArgoCD automatically sync:
-
+### 4. Test the app
 ```bash
-# In your jgavairo-app repo
-sed -i 's/v1/v2/g' app/deployment.yaml
-git add . && git commit -m "upgrade to v2" && git push
+sudo kubectl port-forward svc/jgavairo-app-service -n dev 9999:80 &
+curl http://localhost:9999
+# {"status":"ok", "message": "v1"}
+```
 
-# Check the update
-curl http://localhost:9999  # (with port-forward: kubectl port-forward svc/jgavairo-app-service -n dev 9999:80)
+### 5. Update v1 → v2
+```bash
+cd /tmp/jgavairo-app
+sed -i 's/playground:v1/playground:v2/g' app/deployment.yaml
+git add . && git commit -m "v2" && git push
+```
+On ArgoCD UI → **Refresh** → **Sync**, then:
+```bash
+sudo kubectl port-forward svc/jgavairo-app-service -n dev 9999:80 &
+curl http://localhost:9999
+# {"status":"ok", "message": "v2"}
 ```
