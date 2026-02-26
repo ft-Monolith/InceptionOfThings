@@ -52,8 +52,7 @@ sudo kubectl get pods -n dev              # → jgavairo-app Running
 
 ### 4. Test the app
 ```bash
-sudo kubectl port-forward svc/jgavairo-app-service -n dev 9999:80 &
-curl http://localhost:9999
+curl http://localhost:8888
 # {"status":"ok", "message": "v1"}
 ```
 
@@ -65,7 +64,6 @@ git add . && git commit -m "v2" && git push
 ```
 On ArgoCD UI → **Refresh** → **Sync**, then:
 ```bash
-sudo kubectl port-forward svc/jgavairo-app-service -n dev 9999:80 &
-curl http://localhost:9999
+curl http://localhost:8888
 # {"status":"ok", "message": "v2"}
 ```
