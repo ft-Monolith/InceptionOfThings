@@ -119,7 +119,7 @@ Le guide de démonstration détaillé est disponible dans [bonus/README.md](bonu
 
 ---
 
-## 🛠️ Stack technique
+##  Stack technique
 
 - **IaC / Virtualisation :** Vagrant, VirtualBox
 - **Container orchestration :** Kubernetes (K3s, K3d)
