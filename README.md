@@ -2,7 +2,7 @@
 
 > Projet d’infrastructure orienté DevOps/GitOps réalisé en plusieurs phases, avec montée en complexité : cluster local, déploiements applicatifs, automatisation continue avec ArgoCD, puis intégration GitLab.
 
-## 🎯 Objectif du projet
+##  Objectif du projet
 
 Concevoir et automatiser un environnement Kubernetes reproductible, de la création du cluster jusqu’au déploiement continu d’applications, en utilisant :
 
@@ -14,7 +14,7 @@ Concevoir et automatiser un environnement Kubernetes reproductible, de la créat
 
 ---
 
-## 🧱 Architecture du repository
+##  Architecture du repository
 
 ```text
 bonus/
@@ -36,7 +36,7 @@ p3/
 
 ---
 
-## 🚀 Phases du projet
+##  Phases du projet
 
 ## 1) P1 — Cluster K3s multi-nœuds avec Vagrant
 
@@ -130,7 +130,7 @@ Le guide de démonstration détaillé est disponible dans [bonus/README.md](bonu
 
 ---
 
-## ✅ Compétences démontrées
+##  Compétences démontrées
 
 - Automatisation d’environnements Kubernetes reproductibles
 - Architecture multi-nœuds et réseau privé de VMs
@@ -141,7 +141,7 @@ Le guide de démonstration détaillé est disponible dans [bonus/README.md](bonu
 
 ---
 
-## ⚠️ Notes importantes
+##  Notes importantes
 
 - Les scripts sont principalement testés sur **Linux**.
 - Certains scripts nécessitent les droits `sudo`.
